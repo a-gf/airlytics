@@ -2,29 +2,35 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import matplotlib.pyplot as plt
-from wordcloud import WordCloud, STOPWORDS
+from wordcloud import WordCloud #, STOPWORDS
+from sklearn.feature_extraction.text import CountVectorizer
+from nltk.corpus import stopwords
+import nltk
 
 st.title("Experiencia de usuario en diferentes aerolíneas 🛫")
 st.sidebar.title("Experiencia de usuario en diferentes aerolíneas 🛫")
 
 DATA_URL = "data/airlines_reviews.csv"
+archivo_comentarios = "data/comentarios.csv"
 
 @st.cache_data
 def load_data():
     data = pd.read_csv(DATA_URL)
     return data
 
-data = load_data()
+@st.cache_data
+def cargar_comentarios():
+    comentarios = pd.read_csv(archivo_comentarios, usecols=[0, 1, 2])
+    return comentarios
 
-#st.write(data)
-#st.write(data.columns)
+data = load_data()
+comentarios = cargar_comentarios()
 
 lista_aerolineas = data['Airline'].unique()
 
 #st.markdown("### Las aerolíneas tenidas en cuenta son las siguientes:")
 #for airline in lista_aerolineas:
 #    st.markdown(f"- {airline}")
-
 
 st.markdown("### Las aerolíneas tenidas en cuenta son las siguientes:")
 
@@ -48,10 +54,9 @@ with col2:
 
 st.text(" ")
 st.sidebar.subheader('Número de reseñas por aerolínea')
-if not st.sidebar.checkbox("Cerrar", True, key="numero-resenas"):
+if not st.sidebar.checkbox("Cerrar gráfico", True, key="numero-resenas"):
     st.markdown("### Número de reseñas por aerolinea")
     numero_reviews = data['Airline'].value_counts()
-    #st.write(numero_reviews)
 
     numero_reviews = numero_reviews.reset_index()
     numero_reviews.columns = ['Airline', 'Reviews']
@@ -69,7 +74,7 @@ if not st.sidebar.checkbox("Cerrar", True, key="numero-resenas"):
 
 # ## Gráfico de recomendación por aerolíneas
 st.sidebar.subheader('Recomendación por aerolínea')
-if not st.sidebar.checkbox("Cerrar", True, key="recomendacion-aerolinea"):
+if not st.sidebar.checkbox("Cerrar gráfico", True, key="recomendacion-aerolinea"):
     ## Gráfico de porcentaje de recomendación por aerolínea
     st.markdown("### Comparación del porcentaje de recomendaciones por aerolínea")
 
@@ -271,32 +276,76 @@ if 'Overall Rating' in data.columns and 'Class' in data.columns:
 
 #### Nube
 
+# # Configuración del sidebar
+# st.sidebar.subheader("Nube de palabras")
+# sentimiento = st.sidebar.radio('Elija el sentimiento para la nube: ', ('positivo', 'negativo'))
+#
+# if not st.sidebar.checkbox("Cerrar", True, key="3"):
+#     st.header(f"Nube de palabras para el sentimiento {sentimiento}")
+#
+#     # Mapear sentimientos a valores en la columna 'Recommended'
+#     if sentimiento == 'positivo':
+#         df = data[data['Recommended'] == 'yes']
+#     else:
+#         df = data[data['Recommended'] == 'no']
+#
+#     # Procesar las palabras
+#     words = ' '.join(data['Title'])  # Ajusta 'text' al nombre correcto de tu columna de texto
+#     processed_words = ' '.join(
+#         [word for word in words.split() if 'http' not in word and not word.startswith('@') and word != 'RT'])
+#
+#     # Generar la nube de palabras
+#     wordcloud = WordCloud(stopwords=STOPWORDS, background_color='white', height=640, width=800).generate(
+#         processed_words)
+#
+#     # Crear la figura de Matplotlib
+#     fig, ax = plt.subplots()
+#     ax.imshow(wordcloud, interpolation='bilinear')
+#     ax.axis('off')  # Eliminar los ejes
+#
+#     # Mostrar la figura en Streamlit
+#     st.pyplot(fig)
+
+#from deep_translator import GoogleTranslator
+
+#### Nube
+
 # Configuración del sidebar
 st.sidebar.subheader("Nube de palabras")
-sentimiento = st.sidebar.radio('Elija el sentimiento para la nube: ', ('positivo', 'negativo'))
+# Sidebar para seleccionar el sentimiento
+sentimiento_seleccionado = st.sidebar.radio("Selecciona el Sentimiento", ("Positivo", "Negativo"))
 
-if not st.sidebar.checkbox("Cerrar", True, key="3"):
-    st.header(f"Nube de palabras para el sentimiento {sentimiento}")
+# Descargar las stopwords en español de nltk (si no están descargadas)
+nltk.download('stopwords')
+spanish_stopwords = stopwords.words('spanish')
 
-    # Mapear sentimientos a valores en la columna 'Recommended'
-    if sentimiento == 'positivo':
-        df = data[data['Recommended'] == 'yes']
-    else:
-        df = data[data['Recommended'] == 'no']
+# Filtrar comentarios según el sentimiento seleccionado
+comentarios_filtrados = comentarios[comentarios['Sentimiento'] == sentimiento_seleccionado]
 
-    # Procesar las palabras
-    words = ' '.join(data['Title'])  # Ajusta 'text' al nombre correcto de tu columna de texto
-    processed_words = ' '.join(
-        [word for word in words.split() if 'http' not in word and not word.startswith('@') and word != 'RT'])
+# Convertir los textos a una sola cadena
+words = ' '.join(comentarios_filtrados['Resenas'].fillna('').astype(str))
 
-    # Generar la nube de palabras
-    wordcloud = WordCloud(stopwords=STOPWORDS, background_color='white', height=640, width=800).generate(
-        processed_words)
+# Preprocesar eliminando URLs, menciones, etc.
+processed_words = ' '.join(
+    [word for word in words.split() if 'http' not in word and not word.startswith('@') and word != 'RT']
+)
+
+if not st.sidebar.checkbox("Cerrar gráfico", True, key="3"):
+
+    st.markdown(f"### Nube de palabras para el sentimiento {sentimiento_seleccionado}")
+
+    # Usar el vectorizador con las palabras de parada en español
+    vectorizer = CountVectorizer(stop_words=spanish_stopwords)
+    word_counts = vectorizer.fit_transform([processed_words])
+    word_frequencies = dict(zip(vectorizer.get_feature_names_out(), word_counts.toarray()[0]))
+
+    # Generar la nube de palabras basada en frecuencias
+    wordcloud = WordCloud(stopwords=spanish_stopwords, background_color='white', height=640, width=800).generate_from_frequencies(word_frequencies)
 
     # Crear la figura de Matplotlib
     fig, ax = plt.subplots()
     ax.imshow(wordcloud, interpolation='bilinear')
     ax.axis('off')  # Eliminar los ejes
 
-    # Mostrar la figura en Streamlit
+    # Mostrar la figura
     st.pyplot(fig)
