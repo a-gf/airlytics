@@ -10,7 +10,7 @@ import nltk
 st.title("Experiencia de usuario en diferentes aerolíneas 🛫")
 st.sidebar.title("Experiencia de usuario en diferentes aerolíneas 🛫")
 
-DATA_URL = "data/airlines_reviews.csv"
+DATA_URL = "data/airline-reviews-test.csv"
 archivo_comentarios = "data/comentarios.csv"
 
 @st.cache_data
@@ -55,7 +55,7 @@ with col2:
 st.text(" ")
 st.sidebar.subheader('Número de reseñas por aerolínea')
 if not st.sidebar.checkbox("Cerrar gráfico", True, key="numero-resenas"):
-    st.markdown("### Número de reseñas por aerolinea")
+    st.markdown("### Número de reseñas por aerolínea")
     numero_reviews = data['Airline'].value_counts()
 
     numero_reviews = numero_reviews.reset_index()
@@ -76,7 +76,7 @@ if not st.sidebar.checkbox("Cerrar gráfico", True, key="numero-resenas"):
 st.sidebar.subheader('Recomendación por aerolínea')
 if not st.sidebar.checkbox("Cerrar gráfico", True, key="recomendacion-aerolinea"):
     ## Gráfico de porcentaje de recomendación por aerolínea
-    st.markdown("### Comparación del porcentaje de recomendaciones por aerolínea")
+    st.markdown("### Recomendación por aerolínea")
 
     # Agrupar y calcular el total
     recommended_data = data.groupby(['Airline', 'Recommended']).size().reset_index(name='Count')
@@ -103,10 +103,10 @@ if not st.sidebar.checkbox("Cerrar gráfico", True, key="recomendacion-aerolinea
         pivot_data,
         x='airline',
         y=['Porcentaje Sí', 'Porcentaje No'],
-        labels={'value': 'Porcentaje', 'variable': 'Recomendada'},
+        labels={'value': 'Porcentaje', 'variable': 'Recomendada', 'airline':'Aerolínea'},
         barmode='group',
         color_discrete_sequence=px.colors.qualitative.Pastel,
-        title="Porcentaje de recomendación por aerolínea"
+        #title="Porcentaje de recomendación por aerolínea"
     )
 
     # Mostrar el gráfico en Streamlit
@@ -149,6 +149,10 @@ choice = st.sidebar.multiselect('Elige la aerolínea',lista_aerolineas, key='mul
 #    st.plotly_chart(fig_choice)
 
 if len(choice) > 0:
+
+    # Título de sección
+    st.subheader("Desglose de puntuaciones por aerolínea")
+
     # Filtrar los datos según las aerolíneas seleccionadas
     choice_data = data[data['Airline'].isin(choice)]
 
@@ -173,8 +177,8 @@ if len(choice) > 0:
         x='Airline',
         y=['Comodidad del Asiento', 'Servicio del Personal', 'Comida y Bebidas',
            'Entretenimiento a Bordo', 'Relación Calidad-Precio'],
-        title="Promedio de puntuaciones por categoría",
-        labels={'value': 'Promedio', 'variable': 'Categoría'},
+        #title="Promedio de puntuaciones por categoría",
+        labels={'value': 'Promedio', 'variable': 'Categoría', 'Airline':'Aerolínea'},
         barmode='group',  # Agrupar las barras
         color_discrete_sequence=px.colors.qualitative.Pastel
     )
