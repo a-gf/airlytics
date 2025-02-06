@@ -7,24 +7,36 @@ from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 import nltk
 
-st.title("Experiencia de usuario en diferentes aerolíneas 🛫")
-st.sidebar.title("Experiencia de usuario en diferentes aerolíneas 🛫")
+# st.title("Experiencia de usuario en diferentes aerolíneas 🛫")
+# st.sidebar.title("Experiencia de usuario en diferentes aerolíneas 🛫")
+
+st.title("Airlytics 🛫")
+st.text("Compare la experiencia en diferentes aerolíneas")
+st.sidebar.title("Airlytics 🛫")
+# st.sidebar.text("Compare la experiencia en diferentes aerolíneas")
 
 DATA_URL = "data/airline-reviews-test.csv"
-archivo_comentarios = "data/comentarios.csv"
+archivo_comentarios = "data/comentarios-test.csv"
 
 @st.cache_data
 def load_data():
     data = pd.read_csv(DATA_URL)
     return data
 
-@st.cache_data
-def cargar_comentarios():
-    comentarios = pd.read_csv(archivo_comentarios, usecols=[0, 1, 2])
-    return comentarios
+# import chardet
+#
+# with open(archivo_comentarios, "rb") as f:
+#     resultado = chardet.detect(f.read())
+#
+# st.text(resultado["encoding"])
+
+# @st.cache_data
+# def cargar_comentarios():
+#     comentarios = pd.read_csv(archivo_comentarios, usecols=[0, 1, 2], encoding="utf-8", errors="replace")
+#     return comentarios
 
 data = load_data()
-comentarios = cargar_comentarios()
+# comentarios = cargar_comentarios()
 
 lista_aerolineas = data['Airline'].unique()
 
@@ -32,7 +44,7 @@ lista_aerolineas = data['Airline'].unique()
 #for airline in lista_aerolineas:
 #    st.markdown(f"- {airline}")
 
-st.markdown("### Las aerolíneas tenidas en cuenta son las siguientes:")
+st.markdown("### Lista de aerolíneas:")
 
 # Crear columnas en la interfaz
 col1, col2 = st.columns(2)
@@ -314,42 +326,42 @@ if 'Overall Rating' in data.columns and 'Class' in data.columns:
 
 #### Nube
 
-# Configuración del sidebar
-st.sidebar.subheader("Nube de palabras")
-# Sidebar para seleccionar el sentimiento
-sentimiento_seleccionado = st.sidebar.radio("Selecciona el Sentimiento", ("Positivo", "Negativo"))
-
-# Descargar las stopwords en español de nltk (si no están descargadas)
-nltk.download('stopwords')
-spanish_stopwords = stopwords.words('spanish')
-
-# Filtrar comentarios según el sentimiento seleccionado
-comentarios_filtrados = comentarios[comentarios['Sentimiento'] == sentimiento_seleccionado]
-
-# Convertir los textos a una sola cadena
-words = ' '.join(comentarios_filtrados['Resenas'].fillna('').astype(str))
-
-# Preprocesar eliminando URLs, menciones, etc.
-processed_words = ' '.join(
-    [word for word in words.split() if 'http' not in word and not word.startswith('@') and word != 'RT']
-)
-
-if not st.sidebar.checkbox("Cerrar gráfico", True, key="3"):
-
-    st.markdown(f"### Nube de palabras para el sentimiento {sentimiento_seleccionado}")
-
-    # Usar el vectorizador con las palabras de parada en español
-    vectorizer = CountVectorizer(stop_words=spanish_stopwords)
-    word_counts = vectorizer.fit_transform([processed_words])
-    word_frequencies = dict(zip(vectorizer.get_feature_names_out(), word_counts.toarray()[0]))
-
-    # Generar la nube de palabras basada en frecuencias
-    wordcloud = WordCloud(stopwords=spanish_stopwords, background_color='white', height=640, width=800).generate_from_frequencies(word_frequencies)
-
-    # Crear la figura de Matplotlib
-    fig, ax = plt.subplots()
-    ax.imshow(wordcloud, interpolation='bilinear')
-    ax.axis('off')  # Eliminar los ejes
-
-    # Mostrar la figura
-    st.pyplot(fig)
+# # Configuración del sidebar
+# st.sidebar.subheader("Nube de palabras")
+# # Sidebar para seleccionar el sentimiento
+# sentimiento_seleccionado = st.sidebar.radio("Selecciona el Sentimiento", ("Positivo", "Negativo"))
+#
+# # Descargar las stopwords en español de nltk (si no están descargadas)
+# nltk.download('stopwords')
+# spanish_stopwords = stopwords.words('spanish')
+#
+# # Filtrar comentarios según el sentimiento seleccionado
+# comentarios_filtrados = comentarios[comentarios['Sentimiento'] == sentimiento_seleccionado]
+#
+# # Convertir los textos a una sola cadena
+# words = ' '.join(comentarios_filtrados['Resenas'].fillna('').astype(str))
+#
+# # Preprocesar eliminando URLs, menciones, etc.
+# processed_words = ' '.join(
+#     [word for word in words.split() if 'http' not in word and not word.startswith('@') and word != 'RT']
+# )
+#
+# if not st.sidebar.checkbox("Cerrar gráfico", True, key="3"):
+#
+#     st.markdown(f"### Nube de palabras para el sentimiento {sentimiento_seleccionado}")
+#
+#     # Usar el vectorizador con las palabras de parada en español
+#     vectorizer = CountVectorizer(stop_words=spanish_stopwords)
+#     word_counts = vectorizer.fit_transform([processed_words])
+#     word_frequencies = dict(zip(vectorizer.get_feature_names_out(), word_counts.toarray()[0]))
+#
+#     # Generar la nube de palabras basada en frecuencias
+#     wordcloud = WordCloud(stopwords=spanish_stopwords, background_color='white', height=640, width=800).generate_from_frequencies(word_frequencies)
+#
+#     # Crear la figura de Matplotlib
+#     fig, ax = plt.subplots()
+#     ax.imshow(wordcloud, interpolation='bilinear')
+#     ax.axis('off')  # Eliminar los ejes
+#
+#     # Mostrar la figura
+#     st.pyplot(fig)
